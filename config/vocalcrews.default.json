@@ -12,7 +12,10 @@
     "Shark",
     "Skeleton"
   ],
-  "categories": [
-    447178425728237579
-  ]
+  "categories": {
+    "447178425728237579": {
+      "override": "You can replace here any default setting, for example:",
+      "crew_size": 5
+    }
+  }
 }

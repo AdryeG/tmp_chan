@@ -6,17 +6,43 @@ import random
 
 class VocalCrewsPlugin(Plugin):
     crew_creators = set()
-    used_names = set()
+    used_names = {}
 
     def load(self, ctx):
         super(VocalCrewsPlugin, self).load(ctx)
         if self.config['enabled']:
             self.register_listener(self.on_guild_create, 'event', 'GuildCreate')
 
+    def create_crew_channel(self, channel):
+        category_config = self.config['categories'].get(str(channel.parent.id), {})
+        crew_names = category_config.get('crew_names', self.config['crew_names'])
+        crew_formatter = category_config.get('crew_formatter', self.config['crew_formatter'])
+        if channel.parent.id not in self.used_names:
+            self.used_names[channel.parent.id] = set()
+        used_names = self.used_names[channel.parent.id]
+        available_names = set(crew_names).difference(used_names)
+        chosen_name = random.choice(list(available_names))
+        used_names.add(chosen_name)
+        if len(used_names) == len(crew_names):
+            used_names.clear()
+        new_channel_name = crew_formatter.format(chosen_name)
+        channel.set_name(new_channel_name)
+        self.crew_creators.remove(channel.id)
+        return channel
+
+    def create_creator_channel(self, category):
+        category_config = self.config['categories'].get(str(category.id), {})
+        channel_name = category_config.get('new_crew_name', self.config['new_crew_name'])
+        channel_limit = category_config.get('crew_size', self.config['crew_size'])
+        creator = category.create_voice_channel(channel_name, user_limit=channel_limit)
+        self.crew_creators.add(creator.id)
+        return creator
+
     def on_guild_create(self, event):
         guild = event.guild
         logging.info('Setuping voice channels for guild "{}" (#{})'.format(guild.name, guild.id))
-        categories = set(guild.channels).intersection(self.config['categories'])
+        config_categories = [int(c) for c in self.config['categories']]
+        categories = set(guild.channels).intersection(config_categories)
         for category_id in categories:
             category = guild.channels[category_id]
             logging.info('Setting category "{}" (#{}) as vocal crew category'.format(category.name, category.id))
@@ -36,18 +62,15 @@ class VocalCrewsPlugin(Plugin):
                         logging.warning(
                             'Leaving non-empty unknown voice channel "{}" (#{})'.format(channel.name, channel.id)
                         )
-            creator = category.create_voice_channel(
-                self.config['new_crew_name'],
-                user_limit=self.config['crew_size']
-            )
-            self.crew_creators.add(creator.id)
+            self.create_creator_channel(category)
         self.register_listener(self.on_voice_state_update, 'event', 'VoiceStateUpdate')
 
     def on_voice_state_update(self, event):
         guild_channels = list(event.state.guild.channels.values())
         deleting_crew_channels = []
+        managed_categories = [int(c) for c in self.config['categories']]
         for channel in guild_channels:
-            if channel.parent_id in self.config['categories'] and channel.id not in self.crew_creators:
+            if channel.parent_id in managed_categories and channel.id not in self.crew_creators:
                 deleting_crew_channels.append(channel.id)
         voice_states = list(event.state.guild.voice_states.values())
         for voice_state in voice_states:
@@ -58,24 +81,12 @@ class VocalCrewsPlugin(Plugin):
             logging.info('Deleting empty channel "{}" (#{})'.format(channel.name, channel.id))
             channel.delete()
         if event.state.channel_id in self.crew_creators:
-            channel = event.state.channel
-            available_names = set(self.config['crew_names']).difference(self.used_names)
-            chosen_name = random.choice(list(available_names))
-            self.used_names.add(chosen_name)
-            if len(self.used_names) == len(self.config['crew_names']):
-                self.used_names = set()
-            new_channel_name = self.config['crew_formatter'].format(chosen_name)
+            channel = self.create_crew_channel(event.state.channel)
             logging.info(
                 'Creating Crew "{}" (#{}) (requested by {})'.format(
-                    new_channel_name,
+                    channel.name,
                     channel.id,
                     str(event.state.user)
                 )
             )
-            channel.set_name(new_channel_name)
-            creator = channel.parent.create_voice_channel(
-                self.config['new_crew_name'],
-                user_limit=self.config['crew_size']
-            )
-            self.crew_creators.remove(channel.id)
-            self.crew_creators.add(creator.id)
+            self.create_creator_channel(channel.parent)
