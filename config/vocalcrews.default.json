@@ -1,0 +1,18 @@
+{
+  "enabled": true,
+  "new_crew_name": "Créer un équipage",
+  "crew_formatter": "Équipage {}",
+  "crew_size": 4,
+  "crew_names": [
+    "Test",
+    "Indigo",
+    "Ruby",
+    "Souls",
+    "Gold",
+    "Shark",
+    "Skeleton"
+  ],
+  "categories": [
+    447178425728237579
+  ]
+}
