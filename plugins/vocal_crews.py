@@ -14,6 +14,7 @@ class VocalCrewsPlugin(Plugin):
             self.register_listener(self.on_guild_create, 'event', 'GuildCreate')
 
     def create_crew_channel(self, channel):
+        self.crew_creators.remove(channel.id)
         category_config = self.config['categories'].get(str(channel.parent.id), {})
         crew_names = category_config.get('crew_names', self.config['crew_names'])
         crew_formatter = category_config.get('crew_formatter', self.config['crew_formatter'])
@@ -27,7 +28,6 @@ class VocalCrewsPlugin(Plugin):
             used_names.clear()
         new_channel_name = crew_formatter.format(chosen_name)
         channel.set_name(new_channel_name)
-        self.crew_creators.remove(channel.id)
         return channel
 
     def create_creator_channel(self, category):
@@ -66,6 +66,16 @@ class VocalCrewsPlugin(Plugin):
         self.register_listener(self.on_voice_state_update, 'event', 'VoiceStateUpdate')
 
     def on_voice_state_update(self, event):
+        if event.state.channel_id in self.crew_creators:
+            channel = self.create_crew_channel(event.state.channel)
+            logging.info(
+                'Creating Crew "{}" (#{}) (requested by {})'.format(
+                    channel.name,
+                    channel.id,
+                    str(event.state.user)
+                )
+            )
+            self.create_creator_channel(channel.parent)
         guild_channels = list(event.state.guild.channels.values())
         deleting_crew_channels = []
         managed_categories = [int(c) for c in self.config['categories']]
@@ -80,13 +90,3 @@ class VocalCrewsPlugin(Plugin):
             channel = event.state.guild.channels[channel_id]
             logging.info('Deleting empty channel "{}" (#{})'.format(channel.name, channel.id))
             channel.delete()
-        if event.state.channel_id in self.crew_creators:
-            channel = self.create_crew_channel(event.state.channel)
-            logging.info(
-                'Creating Crew "{}" (#{}) (requested by {})'.format(
-                    channel.name,
-                    channel.id,
-                    str(event.state.user)
-                )
-            )
-            self.create_creator_channel(channel.parent)
