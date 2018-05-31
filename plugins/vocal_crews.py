@@ -13,7 +13,7 @@ class VocalCrewsPlugin(Plugin):
         if self.config['enabled']:
             self.register_listener(self.on_guild_create, 'event', 'GuildCreate')
 
-    def create_crew_channel(self, channel):
+    def create_crew_channel(self, channel, user):
         self.crew_creators.remove(channel.id)
         category_config = self.config['categories'].get(str(channel.parent.id), {})
         crew_names = category_config.get('crew_names', self.config['crew_names'])
@@ -27,6 +27,13 @@ class VocalCrewsPlugin(Plugin):
         if len(used_names) == len(crew_names):
             used_names.clear()
         new_channel_name = crew_formatter.format(chosen_name)
+        logging.info(
+            'Creating Crew "{}" (#{}) (requested by {})'.format(
+                new_channel_name,
+                channel.id,
+                str(user)
+            )
+        )
         channel.set_name(new_channel_name)
         return channel
 
@@ -66,16 +73,8 @@ class VocalCrewsPlugin(Plugin):
         self.register_listener(self.on_voice_state_update, 'event', 'VoiceStateUpdate')
 
     def on_voice_state_update(self, event):
-        channel = event.state.channel
         if event.state.channel_id in self.crew_creators:
-            self.create_crew_channel(channel)
-            logging.info(
-                'Creating Crew "{}" (#{}) (requested by {})'.format(
-                    channel.name,
-                    channel.id,
-                    str(event.state.user)
-                )
-            )
+            channel = self.create_crew_channel(event.state.channel, user=event.state.user)
             self.create_creator_channel(channel.parent)
         guild_channels = list(event.state.guild.channels.values())
         deleting_crew_channels = []
