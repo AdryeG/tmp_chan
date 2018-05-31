@@ -5,6 +5,7 @@ import random
 
 
 class VocalCrewsPlugin(Plugin):
+    known_guilds = set()
     crew_creators = set()
     used_names = {}
 
@@ -47,6 +48,8 @@ class VocalCrewsPlugin(Plugin):
 
     def on_guild_create(self, event):
         guild = event.guild
+        if guild.id in self.known_guilds:
+            return
         logging.info('Setuping voice channels for guild "{}" (#{})'.format(guild.name, guild.id))
         config_categories = [int(c) for c in self.config['categories']]
         categories = set(guild.channels).intersection(config_categories)
@@ -70,7 +73,9 @@ class VocalCrewsPlugin(Plugin):
                             'Leaving non-empty unknown voice channel "{}" (#{})'.format(channel.name, channel.id)
                         )
             self.create_creator_channel(category)
-        self.register_listener(self.on_voice_state_update, 'event', 'VoiceStateUpdate')
+        if not self.known_guilds:
+            self.register_listener(self.on_voice_state_update, 'event', 'VoiceStateUpdate')
+        self.known_guilds.add(guild.id)
 
     def on_voice_state_update(self, event):
         if event.state.channel_id in self.crew_creators:
