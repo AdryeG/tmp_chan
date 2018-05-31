@@ -66,8 +66,9 @@ class VocalCrewsPlugin(Plugin):
         self.register_listener(self.on_voice_state_update, 'event', 'VoiceStateUpdate')
 
     def on_voice_state_update(self, event):
+        channel = event.state.channel
         if event.state.channel_id in self.crew_creators:
-            channel = self.create_crew_channel(event.state.channel)
+            self.create_crew_channel(channel)
             logging.info(
                 'Creating Crew "{}" (#{}) (requested by {})'.format(
                     channel.name,
