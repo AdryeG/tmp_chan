@@ -87,22 +87,14 @@ class VocalCrewsPlugin(Plugin):
         managed_categories = [int(c) for c in self.config['categories']]
         for channel in guild_channels:
             if channel.parent_id in managed_categories and channel.id not in self.crew_creators:
-                logging.debug("Adding {} (#{}) as potentially empty channel".format(channel.name, channel.id))
                 deleting_crew_channels.append(channel.id)
-            else:
-                logging.debug("Found channel {} (#{}) in guild {}".format(channel.name, channel.id, guild.name))
-                if channel.parent_id not in managed_categories:
-                    logging.debug("Channel {} (#{}) is not managed by this bot (parent_id: #{})".format(
-                        channel.name,
-                        channel.id,
-                        channel.parent_id
-                    ))
-                if channel.id in self.crew_creators:
-                    logging.debug("Channel {} (#{}) is a crew creator".format(channel.name, channel.id))
         voice_states = list(event.state.guild.voice_states.values())
         for voice_state in voice_states:
             if voice_state.channel_id in deleting_crew_channels:
-                logging.debug("Someone is in #{}, don't deleting this channel".format(voice_state.channel_id))
+                logging.info("{} is still in #{}, don't deleting this channel".format(
+                    str(voice_state.user),
+                    voice_state.channel_id
+                ))
                 deleting_crew_channels.remove(voice_state.channel_id)
         for channel_id in deleting_crew_channels:
             channel = event.state.guild.channels[channel_id]
