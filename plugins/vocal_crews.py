@@ -91,10 +91,6 @@ class VocalCrewsPlugin(Plugin):
         voice_states = list(event.state.guild.voice_states.values())
         for voice_state in voice_states:
             if voice_state.channel_id in deleting_crew_channels:
-                logging.info("{} is still in #{}, don't deleting this channel".format(
-                    str(voice_state.user),
-                    voice_state.channel_id
-                ))
                 deleting_crew_channels.remove(voice_state.channel_id)
         for channel_id in deleting_crew_channels:
             channel = event.state.guild.channels[channel_id]
