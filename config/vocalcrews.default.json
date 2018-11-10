@@ -11,9 +11,11 @@
     "Dvorak",
   ],
   "categories": {
-    "503216634245152770": {
+    "502942621409345537": {
       "override": "You can replace here any default setting, for example:",
-      "crew_size": 10
+      "crew_size": 10,
+      "new_crew_name" : "création-de-chanel-temporaire",
+      "crew_formatter" : "{}",
     }
   }
 }
