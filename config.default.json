@@ -1,5 +1,5 @@
 {
-  "token": "<TOKEN>",
+  "token": "<process.env.TOKEN>",
   "sentry_dsn": "[YOUR_SENTRY_DSN]",
   "sentry_environment": "production",
   "bot": {
