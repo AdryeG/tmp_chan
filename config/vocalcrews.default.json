@@ -4,18 +4,16 @@
   "crew_formatter": "Équipage {}",
   "crew_size": 4,
   "crew_names": [
-    "Test",
-    "Indigo",
-    "Ruby",
-    "Souls",
-    "Gold",
-    "Shark",
-    "Skeleton"
+    "AZERTY",
+    "QWERTY",
+    "BÉPO",
+    "QWERTZ",
+    "Dvorak",
   ],
   "categories": {
-    "447178425728237579": {
+    "503216634245152770": {
       "override": "You can replace here any default setting, for example:",
-      "crew_size": 5
+      "crew_size": 10
     }
   }
 }
